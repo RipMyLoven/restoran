@@ -51,16 +51,6 @@
                     "nimetus": "Carbonara",
                     "koostis": "Pasta, peekon, muna, parmesani juust, must pipar",
                     "kalorsus": "420"
-                },
-                {
-                    "@attributes": {
-                        "id": "106",
-                        "liik": "praad",
-                        "hind": "12"
-                    },
-                    "nimetus": "React",
-                    "koostis": "React React React React",
-                    "kalorsus": "250"
                 }
             ],
             "jook": [
@@ -107,17 +97,6 @@
                     "tootja": "Mahlakeskus",
                     "alkoholiProtsent": "0",
                     "hind": "3.20"
-                },
-                {
-                    "@attributes": {
-                        "id": "205",
-                        "liik": "alkohoolne",
-                        "maht": "12"
-                    },
-                    "nimetus": "Lisa",
-                    "tootja": "Lisa",
-                    "alkoholiProtsent": "12",
-                    "hind": "12"
                 }
             ]
         }
@@ -274,21 +253,6 @@
                     "telefon": "+372 5890 1234"
                 },
                 "kogusumma": "67.50"
-            },
-            {
-                "@attributes": {
-                    "id": "1005",
-                    "laud_id": "1",
-                    "teenindaja_id": "1",
-                    "staatus": "ootel",
-                    "prioriteet": "madal"
-                },
-                "tellimuse_aeg": "2025-11-15T12:00",
-                "kliendi_info": {
-                    "nimi": "Martin",
-                    "telefon": "+372 5251307"
-                },
-                "kogusumma": "50"
             }
         ]
     }
