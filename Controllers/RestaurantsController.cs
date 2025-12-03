@@ -1,5 +1,5 @@
-using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Restoran.Data;
 using Restoran.Models;
@@ -9,7 +9,8 @@ namespace Restoran.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
-    [Authorize]
+    [Produces("application/json")]
+    [Authorize] // Требуется авторизация для всех
     public class RestaurantsController : ControllerBase
     {
         private readonly ApplicationDbContext _context;
@@ -19,7 +20,11 @@ namespace Restoran.Controllers
             _context = context;
         }
 
+        /// <summary>
+        /// Получить все рестораны
+        /// </summary>
         [HttpGet]
+        [ProducesResponseType(typeof(IEnumerable<RestaurantDto>), 200)]
         public async Task<ActionResult<IEnumerable<RestaurantDto>>> GetRestaurants()
         {
             var restaurants = await _context.Restaurants
@@ -29,133 +34,116 @@ namespace Restoran.Controllers
                     Name = r.Name,
                     TableCount = r.TableCount,
                     AllergyTags = r.AllergyTags,
-                    DietTags = r.DietTags,
-                    CreatedAt = r.CreatedAt
-                }).ToListAsync();
+                    DietTags = r.DietTags
+                })
+                .ToListAsync();
 
             return Ok(restaurants);
         }
 
+        /// <summary>
+        /// Получить ресторан по ID
+        /// </summary>
         [HttpGet("{id}")]
+        [ProducesResponseType(typeof(RestaurantDto), 200)]
+        [ProducesResponseType(404)]
         public async Task<ActionResult<RestaurantDto>> GetRestaurant(int id)
         {
-            var restaurant = await _context.Restaurants
-                .Where(r => r.Id == id)
-                .Select(r => new RestaurantDto
-                {
-                    Id = r.Id,
-                    Name = r.Name,
-                    TableCount = r.TableCount,
-                    AllergyTags = r.AllergyTags,
-                    DietTags = r.DietTags,
-                    CreatedAt = r.CreatedAt
-                }).FirstOrDefaultAsync();
-
+            var restaurant = await _context.Restaurants.FindAsync(id);
             if (restaurant == null)
-            {
                 return NotFound();
-            }
 
-            return Ok(restaurant);
-        }
-
-        [HttpPost]
-        [Authorize(Roles = "Admin,Manager")]
-        public async Task<ActionResult<RestaurantDto>> CreateRestaurant(CreateRestaurantDto createRestaurantDto)
-        {
-            var restaurant = new Restaurant
-            {
-                Name = createRestaurantDto.Name,
-                TableCount = createRestaurantDto.TableCount,
-                AllergyTags = createRestaurantDto.AllergyTags,
-                DietTags = createRestaurantDto.DietTags
-            };
-
-            _context.Restaurants.Add(restaurant);
-            await _context.SaveChangesAsync();
-
-            // Create tables for the restaurant
-            for (int i = 1; i <= restaurant.TableCount; i++)
-            {
-                _context.Tables.Add(new Table
-                {
-                    TableNumber = i,
-                    RestaurantId = restaurant.Id,
-                    Capacity = 4,
-                    Status = TableStatus.Available
-                });
-            }
-            await _context.SaveChangesAsync();
-
-            var restaurantDto = new RestaurantDto
+            return Ok(new RestaurantDto
             {
                 Id = restaurant.Id,
                 Name = restaurant.Name,
                 TableCount = restaurant.TableCount,
                 AllergyTags = restaurant.AllergyTags,
-                DietTags = restaurant.DietTags,
-                CreatedAt = restaurant.CreatedAt
+                DietTags = restaurant.DietTags
+            });
+        }
+
+        /// <summary>
+        /// Создать ресторан (только Admin)
+        /// </summary>
+        [HttpPost]
+        [Authorize(Roles = "Admin")]
+        [ProducesResponseType(typeof(RestaurantDto), 201)]
+        public async Task<ActionResult<RestaurantDto>> CreateRestaurant(CreateRestaurantDto dto)
+        {
+            var restaurant = new Restaurant
+            {
+                Name = dto.Name,
+                TableCount = dto.TableCount,
+                AllergyTags = dto.AllergyTags,
+                DietTags = dto.DietTags
             };
 
-            return CreatedAtAction(nameof(GetRestaurant), new { id = restaurant.Id }, restaurantDto);
-        }
+            _context.Restaurants.Add(restaurant);
+            await _context.SaveChangesAsync();
 
-        [HttpPut("{id}")]
-        [Authorize(Roles = "Admin,Manager")]
-        public async Task<IActionResult> UpdateRestaurant(int id, UpdateRestaurantDto updateRestaurantDto)
-        {
-            var restaurant = await _context.Restaurants.FindAsync(id);
-
-            if (restaurant == null)
+            // Автоматически создаём столы
+            for (int i = 1; i <= dto.TableCount; i++)
             {
-                return NotFound();
-            }
-
-            // Update fields if provided
-            if (updateRestaurantDto.Name != null)
-                restaurant.Name = updateRestaurantDto.Name;
-            if (updateRestaurantDto.TableCount.HasValue)
-                restaurant.TableCount = updateRestaurantDto.TableCount.Value;
-            if (updateRestaurantDto.AllergyTags != null)
-                restaurant.AllergyTags = updateRestaurantDto.AllergyTags;
-            if (updateRestaurantDto.DietTags != null)
-                restaurant.DietTags = updateRestaurantDto.DietTags;
-
-            try
-            {
-                await _context.SaveChangesAsync();
-            }
-            catch (DbUpdateConcurrencyException)
-            {
-                if (!RestaurantExists(id))
+                _context.Tables.Add(new Table
                 {
-                    return NotFound();
-                }
-                throw;
+                    Number = i,
+                    Seats = 4,
+                    RestaurantId = restaurant.Id
+                });
             }
+            await _context.SaveChangesAsync();
 
-            return NoContent();
+            return CreatedAtAction(nameof(GetRestaurant), new { id = restaurant.Id },
+                new RestaurantDto
+                {
+                    Id = restaurant.Id,
+                    Name = restaurant.Name,
+                    TableCount = restaurant.TableCount,
+                    AllergyTags = restaurant.AllergyTags,
+                    DietTags = restaurant.DietTags
+                });
         }
 
-        [HttpDelete("{id}")]
+        /// <summary>
+        /// Обновить ресторан (только Admin)
+        /// </summary>
+        [HttpPut("{id}")]
         [Authorize(Roles = "Admin")]
-        public async Task<IActionResult> DeleteRestaurant(int id)
+        [ProducesResponseType(204)]
+        [ProducesResponseType(404)]
+        public async Task<IActionResult> UpdateRestaurant(int id, CreateRestaurantDto dto)
         {
             var restaurant = await _context.Restaurants.FindAsync(id);
             if (restaurant == null)
-            {
                 return NotFound();
-            }
 
-            _context.Restaurants.Remove(restaurant);
+            restaurant.Name = dto.Name;
+            restaurant.TableCount = dto.TableCount;
+            restaurant.AllergyTags = dto.AllergyTags;
+            restaurant.DietTags = dto.DietTags;
             await _context.SaveChangesAsync();
 
             return NoContent();
         }
 
-        private bool RestaurantExists(int id)
+        /// <summary>
+        /// Удалить ресторан (только Admin)
+        /// </summary>
+        [HttpDelete("{id}")]
+        [Authorize(Roles = "Admin")]
+        [ProducesResponseType(204)]
+        [ProducesResponseType(404)]
+        public async Task<IActionResult> DeleteRestaurant(int id)
         {
-            return _context.Restaurants.Any(e => e.Id == id);
+            var restaurant = await _context.Restaurants.FindAsync(id);
+            if (restaurant == null)
+                return NotFound();
+
+            _context.Restaurants.Remove(restaurant);
+            await _context.SaveChangesAsync();
+
+            return NoContent();
         }
     }
 }

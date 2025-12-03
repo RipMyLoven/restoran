@@ -4,6 +4,7 @@ using Microsoft.OpenApi.Models;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
+using System.Text.Json.Serialization;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -12,6 +13,13 @@ builder.Services.AddDbContext<ApplicationDbContext>(options =>
 {
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection"));
 });
+
+// Add controllers with JSON options
+builder.Services.AddControllers()
+    .AddJsonOptions(options =>
+    {
+        options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter());
+    });
 
 // Add JWT Authentication
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
@@ -38,14 +46,13 @@ builder.Services.AddCors(options =>
     options.AddPolicy("AllowReactApp",
         policy =>
         {
-            policy.WithOrigins("http://localhost:3000", "http://localhost:3001")
+            policy.WithOrigins("http://localhost:3000", "http://localhost:3001", "http://localhost:5173", "http://localhost:5174")
                   .AllowAnyHeader()
                   .AllowAnyMethod()
                   .AllowCredentials();
         });
 });
 
-builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(c =>
 {
@@ -89,6 +96,47 @@ builder.Services.AddSwaggerGen(c =>
 
 var app = builder.Build();
 
+// Seed default users
+using (var scope = app.Services.CreateScope())
+{
+    var context = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+
+    // Create admin user if not exists
+    if (!context.Users.Any(u => u.Username == "admin"))
+    {
+        context.Users.Add(new Restoran.Models.User
+        {
+            Username = "admin",
+            PasswordHash = BCrypt.Net.BCrypt.HashPassword("123"),
+            Role = Restoran.Models.UserRole.Admin
+        });
+    }
+
+    // Create waiter user if not exists
+    if (!context.Users.Any(u => u.Username == "waiter"))
+    {
+        context.Users.Add(new Restoran.Models.User
+        {
+            Username = "waiter",
+            PasswordHash = BCrypt.Net.BCrypt.HashPassword("123"),
+            Role = Restoran.Models.UserRole.Waiter
+        });
+    }
+
+    // Create cook user if not exists
+    if (!context.Users.Any(u => u.Username == "cook"))
+    {
+        context.Users.Add(new Restoran.Models.User
+        {
+            Username = "cook",
+            PasswordHash = BCrypt.Net.BCrypt.HashPassword("123"),
+            Role = Restoran.Models.UserRole.Cook
+        });
+    }
+
+    context.SaveChanges();
+}
+
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {
@@ -100,7 +148,7 @@ if (app.Environment.IsDevelopment())
     });
 }
 
-app.UseHttpsRedirection();
+// app.UseHttpsRedirection();
 
 // Use CORS
 app.UseCors("AllowReactApp");

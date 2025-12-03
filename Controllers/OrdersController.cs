@@ -1,5 +1,5 @@
-using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Restoran.Data;
 using Restoran.Models;
@@ -9,7 +9,8 @@ namespace Restoran.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
-    [Authorize]
+    [Produces("application/json")]
+    [Authorize] // Требуется авторизация
     public class OrdersController : ControllerBase
     {
         private readonly ApplicationDbContext _context;
@@ -19,24 +20,20 @@ namespace Restoran.Controllers
             _context = context;
         }
 
+        /// <summary>
+        /// Получить все заказы
+        /// </summary>
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<OrderDto>>> GetOrders([FromQuery] int? restaurantId = null, [FromQuery] string? status = null)
+        [ProducesResponseType(typeof(IEnumerable<OrderDto>), 200)]
+        public async Task<ActionResult<IEnumerable<OrderDto>>> GetOrders([FromQuery] int? restaurantId = null)
         {
             var query = _context.Orders
-                .Include(o => o.Table)
                 .Include(o => o.OrderItems)
-                    .ThenInclude(oi => oi.MenuItem)
+                .ThenInclude(oi => oi.MenuItem)
                 .AsQueryable();
 
             if (restaurantId.HasValue)
-            {
                 query = query.Where(o => o.RestaurantId == restaurantId.Value);
-            }
-
-            if (!string.IsNullOrEmpty(status) && Enum.TryParse<OrderStatus>(status, true, out var orderStatus))
-            {
-                query = query.Where(o => o.Status == orderStatus);
-            }
 
             var orders = await query.Select(o => new OrderDto
             {
@@ -44,35 +41,33 @@ namespace Restoran.Controllers
                 TableId = o.TableId,
                 RestaurantId = o.RestaurantId,
                 Status = o.Status,
-                SpecialRequirements = o.SpecialRequirements,
-                CustomerName = o.CustomerName,
+                Notes = o.Notes,
                 CreatedAt = o.CreatedAt,
-                SentToKitchenAt = o.SentToKitchenAt,
-                ReadyAt = o.ReadyAt,
-                ServedAt = o.ServedAt,
-                CompletedAt = o.CompletedAt,
-                OrderItems = o.OrderItems.Select(oi => new OrderItemDto
+                Items = o.OrderItems.Select(oi => new OrderItemDto
                 {
                     Id = oi.Id,
                     MenuItemId = oi.MenuItemId,
                     MenuItemName = oi.MenuItem.Name,
                     Quantity = oi.Quantity,
-                    Price = oi.PriceAtOrder,
-                    SpecialRequirements = oi.SpecialInstructions
+                    Price = oi.Price
                 }).ToList(),
-                Total = o.OrderItems.Sum(oi => oi.PriceAtOrder * oi.Quantity)
+                Total = o.OrderItems.Sum(oi => oi.Price * oi.Quantity)
             }).ToListAsync();
 
             return Ok(orders);
         }
 
+        /// <summary>
+        /// Получить заказ по ID
+        /// </summary>
         [HttpGet("{id}")]
+        [ProducesResponseType(typeof(OrderDto), 200)]
+        [ProducesResponseType(404)]
         public async Task<ActionResult<OrderDto>> GetOrder(int id)
         {
             var order = await _context.Orders
-                .Include(o => o.Table)
                 .Include(o => o.OrderItems)
-                    .ThenInclude(oi => oi.MenuItem)
+                .ThenInclude(oi => oi.MenuItem)
                 .Where(o => o.Id == id)
                 .Select(o => new OrderDto
                 {
@@ -80,248 +75,137 @@ namespace Restoran.Controllers
                     TableId = o.TableId,
                     RestaurantId = o.RestaurantId,
                     Status = o.Status,
-                    SpecialRequirements = o.SpecialRequirements,
-                    CustomerName = o.CustomerName,
+                    Notes = o.Notes,
                     CreatedAt = o.CreatedAt,
-                    SentToKitchenAt = o.SentToKitchenAt,
-                    ReadyAt = o.ReadyAt,
-                    ServedAt = o.ServedAt,
-                    CompletedAt = o.CompletedAt,
-                    OrderItems = o.OrderItems.Select(oi => new OrderItemDto
+                    Items = o.OrderItems.Select(oi => new OrderItemDto
                     {
                         Id = oi.Id,
                         MenuItemId = oi.MenuItemId,
                         MenuItemName = oi.MenuItem.Name,
                         Quantity = oi.Quantity,
-                        Price = oi.PriceAtOrder,
-                        SpecialRequirements = oi.SpecialInstructions
+                        Price = oi.Price
                     }).ToList(),
-                    Total = o.OrderItems.Sum(oi => oi.PriceAtOrder * oi.Quantity)
+                    Total = o.OrderItems.Sum(oi => oi.Price * oi.Quantity)
                 }).FirstOrDefaultAsync();
 
             if (order == null)
-            {
                 return NotFound();
-            }
 
             return Ok(order);
         }
 
+        /// <summary>
+        /// Создать новый заказ (только Admin, Waiter)
+        /// </summary>
         [HttpPost]
-        public async Task<ActionResult<OrderDto>> CreateOrder(CreateOrderDto createOrderDto)
+        [Authorize(Roles = "Admin,Waiter")]
+        [ProducesResponseType(typeof(OrderDto), 201)]
+        [ProducesResponseType(400)]
+        public async Task<ActionResult<OrderDto>> CreateOrder(CreateOrderDto dto)
         {
-            // Validate table exists
-            var table = await _context.Tables.FindAsync(createOrderDto.TableId);
-            if (table == null)
-            {
-                return BadRequest("Table not found");
-            }
-
             var order = new Order
             {
-                TableId = createOrderDto.TableId,
-                RestaurantId = createOrderDto.RestaurantId,
-                SpecialRequirements = createOrderDto.SpecialRequirements,
-                CustomerName = createOrderDto.CustomerName,
+                TableId = dto.TableId,
+                RestaurantId = dto.RestaurantId,
+                Notes = dto.Notes,
                 Status = OrderStatus.New
             };
 
             _context.Orders.Add(order);
             await _context.SaveChangesAsync();
 
-            // Add order items
-            foreach (var orderItemDto in createOrderDto.OrderItems)
+            foreach (var item in dto.Items)
             {
-                var menuItem = await _context.MenuItems.FindAsync(orderItemDto.MenuItemId);
+                var menuItem = await _context.MenuItems.FindAsync(item.MenuItemId);
                 if (menuItem == null)
-                {
-                    return BadRequest($"Menu item with ID {orderItemDto.MenuItemId} not found");
-                }
+                    return BadRequest($"MenuItem {item.MenuItemId} not found");
 
-                var orderItem = new OrderItem
+                _context.OrderItems.Add(new OrderItem
                 {
                     OrderId = order.Id,
-                    MenuItemId = orderItemDto.MenuItemId,
-                    Quantity = orderItemDto.Quantity,
-                    PriceAtOrder = menuItem.Price,
-                    SpecialInstructions = orderItemDto.SpecialRequirements
-                };
+                    MenuItemId = item.MenuItemId,
+                    Quantity = item.Quantity,
+                    Price = menuItem.Price
+                });
+            }
 
-                _context.OrderItems.Add(orderItem);
+            // Уведомление поварам о новом заказе
+            var cooks = await _context.Users
+                .Where(u => u.Role == UserRole.Cook && u.RestaurantId == dto.RestaurantId)
+                .ToListAsync();
+
+            foreach (var cook in cooks)
+            {
+                _context.Notifications.Add(new Notification
+                {
+                    UserId = cook.Id,
+                    OrderId = order.Id,
+                    Type = NotificationType.OrderCreated,
+                    Message = $"Новый заказ #{order.Id} для стола {dto.TableId}"
+                });
             }
 
             await _context.SaveChangesAsync();
-
-            // Load the complete order for response
-            var createdOrder = await _context.Orders
-                .Include(o => o.OrderItems)
-                    .ThenInclude(oi => oi.MenuItem)
-                .FirstOrDefaultAsync(o => o.Id == order.Id);
-
-            var orderDto = new OrderDto
-            {
-                Id = createdOrder!.Id,
-                TableId = createdOrder.TableId,
-                RestaurantId = createdOrder.RestaurantId,
-                Status = createdOrder.Status,
-                SpecialRequirements = createdOrder.SpecialRequirements,
-                CustomerName = createdOrder.CustomerName,
-                CreatedAt = createdOrder.CreatedAt,
-                OrderItems = createdOrder.OrderItems.Select(oi => new OrderItemDto
-                {
-                    Id = oi.Id,
-                    MenuItemId = oi.MenuItemId,
-                    MenuItemName = oi.MenuItem.Name,
-                    Quantity = oi.Quantity,
-                    Price = oi.PriceAtOrder,
-                    SpecialRequirements = oi.SpecialInstructions
-                }).ToList(),
-                Total = createdOrder.OrderItems.Sum(oi => oi.PriceAtOrder * oi.Quantity)
-            };
-
-            return CreatedAtAction(nameof(GetOrder), new { id = order.Id }, orderDto);
+            return CreatedAtAction(nameof(GetOrder), new { id = order.Id }, null);
         }
 
-        [HttpPut("{id}")]
-        [Authorize(Roles = "Admin,Manager,Waiter")]
-        public async Task<IActionResult> UpdateOrder(int id, UpdateOrderDto updateOrderDto)
-        {
-            var order = await _context.Orders
-                .Include(o => o.OrderItems)
-                .FirstOrDefaultAsync(o => o.Id == id);
-
-            if (order == null)
-            {
-                return NotFound();
-            }
-
-            if (order.Status != OrderStatus.New)
-            {
-                return BadRequest("Can only update orders with 'New' status");
-            }
-
-            // Update basic fields
-            if (updateOrderDto.SpecialRequirements != null)
-                order.SpecialRequirements = updateOrderDto.SpecialRequirements;
-            if (updateOrderDto.CustomerName != null)
-                order.CustomerName = updateOrderDto.CustomerName;
-
-            // Update order items if provided
-            if (updateOrderDto.OrderItems != null)
-            {
-                // Remove existing order items
-                _context.OrderItems.RemoveRange(order.OrderItems);
-
-                // Add new order items
-                foreach (var orderItemDto in updateOrderDto.OrderItems)
-                {
-                    var menuItem = await _context.MenuItems.FindAsync(orderItemDto.MenuItemId);
-                    if (menuItem == null)
-                    {
-                        return BadRequest($"Menu item with ID {orderItemDto.MenuItemId} not found");
-                    }
-
-                    var orderItem = new OrderItem
-                    {
-                        OrderId = order.Id,
-                        MenuItemId = orderItemDto.MenuItemId,
-                        Quantity = orderItemDto.Quantity,
-                        PriceAtOrder = menuItem.Price,
-                        SpecialInstructions = orderItemDto.SpecialRequirements
-                    };
-
-                    _context.OrderItems.Add(orderItem);
-                }
-            }
-
-            await _context.SaveChangesAsync();
-
-            return NoContent();
-        }
-
+        /// <summary>
+        /// Обновить статус заказа (Admin, Cook, Waiter)
+        /// </summary>
         [HttpPatch("{id}/status")]
-        [Authorize(Roles = "Admin,Manager,Waiter,Cook")]
-        public async Task<IActionResult> UpdateOrderStatus(int id, UpdateOrderStatusDto updateStatusDto)
+        [Authorize(Roles = "Admin,Cook,Waiter")]
+        [ProducesResponseType(200)]
+        [ProducesResponseType(404)]
+        public async Task<IActionResult> UpdateStatus(int id, [FromBody] OrderStatus status)
         {
             var order = await _context.Orders.FindAsync(id);
             if (order == null)
-            {
                 return NotFound();
-            }
 
-            var currentStatus = order.Status;
-            var newStatus = updateStatusDto.Status;
+            var oldStatus = order.Status;
+            order.Status = status;
 
-            // Validate status transitions
-            if (!IsValidStatusTransition(currentStatus, newStatus))
+            // Уведомление официантам когда заказ готов
+            if (status == OrderStatus.Ready && oldStatus != OrderStatus.Ready)
             {
-                return BadRequest($"Invalid status transition from {currentStatus} to {newStatus}");
-            }
+                var waiters = await _context.Users
+                    .Where(u => u.Role == UserRole.Waiter && u.RestaurantId == order.RestaurantId)
+                    .ToListAsync();
 
-            order.Status = newStatus;
-
-            // Update timestamp based on status
-            switch (newStatus)
-            {
-                case OrderStatus.SentToKitchen:
-                    order.SentToKitchenAt = DateTime.UtcNow;
-                    break;
-                case OrderStatus.Ready:
-                    order.ReadyAt = DateTime.UtcNow;
-                    break;
-                case OrderStatus.Served:
-                    order.ServedAt = DateTime.UtcNow;
-                    break;
-                case OrderStatus.Completed:
-                    order.CompletedAt = DateTime.UtcNow;
-                    break;
+                foreach (var waiter in waiters)
+                {
+                    _context.Notifications.Add(new Notification
+                    {
+                        UserId = waiter.Id,
+                        OrderId = order.Id,
+                        Type = NotificationType.OrderReady,
+                        Message = $"Заказ #{order.Id} готов к подаче"
+                    });
+                }
             }
 
             await _context.SaveChangesAsync();
 
-            return Ok(new { message = $"Order status updated to {newStatus}", orderId = id });
+            return Ok(new { order.Id, order.Status });
         }
 
+        /// <summary>
+        /// Удалить заказ (только Admin)
+        /// </summary>
         [HttpDelete("{id}")]
-        [Authorize(Roles = "Admin,Manager")]
+        [Authorize(Roles = "Admin")]
+        [ProducesResponseType(204)]
+        [ProducesResponseType(404)]
         public async Task<IActionResult> DeleteOrder(int id)
         {
-            var order = await _context.Orders
-                .Include(o => o.OrderItems)
-                .FirstOrDefaultAsync(o => o.Id == id);
-
+            var order = await _context.Orders.FindAsync(id);
             if (order == null)
-            {
                 return NotFound();
-            }
-
-            if (order.Status != OrderStatus.New && order.Status != OrderStatus.Cancelled)
-            {
-                return BadRequest("Can only delete orders with 'New' or 'Cancelled' status");
-            }
 
             _context.Orders.Remove(order);
             await _context.SaveChangesAsync();
 
             return NoContent();
-        }
-
-        private bool IsValidStatusTransition(OrderStatus currentStatus, OrderStatus newStatus)
-        {
-            return currentStatus switch
-            {
-                OrderStatus.New => newStatus == OrderStatus.SentToKitchen || newStatus == OrderStatus.Cancelled,
-                OrderStatus.SentToKitchen => newStatus == OrderStatus.InProgress || newStatus == OrderStatus.Cancelled,
-                OrderStatus.InProgress => newStatus == OrderStatus.Ready || newStatus == OrderStatus.Cancelled,
-                OrderStatus.Ready => newStatus == OrderStatus.Served || newStatus == OrderStatus.Cancelled,
-                OrderStatus.Served => newStatus == OrderStatus.Completed,
-                _ => false
-            };
-        }
-
-        private bool OrderExists(int id)
-        {
-            return _context.Orders.Any(e => e.Id == id);
         }
     }
 }

@@ -33,16 +33,8 @@ namespace Restoran.Migrations
                     b.Property<DateTime>("ArchivedAt")
                         .HasColumnType("datetime2");
 
-                    b.Property<DateTime?>("CompletedAt")
+                    b.Property<DateTime>("OrderCreatedAt")
                         .HasColumnType("datetime2");
-
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("datetime2");
-
-                    b.Property<string>("CustomerName")
-                        .IsRequired()
-                        .HasMaxLength(100)
-                        .HasColumnType("nvarchar(100)");
 
                     b.Property<string>("OrderItemsJson")
                         .IsRequired()
@@ -51,28 +43,10 @@ namespace Restoran.Migrations
                     b.Property<int>("OriginalOrderId")
                         .HasColumnType("int");
 
-                    b.Property<DateTime?>("ReadyAt")
-                        .HasColumnType("datetime2");
-
                     b.Property<int>("RestaurantId")
                         .HasColumnType("int");
 
-                    b.Property<DateTime?>("SentToKitchenAt")
-                        .HasColumnType("datetime2");
-
-                    b.Property<DateTime?>("ServedAt")
-                        .HasColumnType("datetime2");
-
-                    b.Property<string>("SpecialRequirements")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("Status")
-                        .IsRequired()
-                        .HasMaxLength(50)
-                        .HasColumnType("nvarchar(50)");
-
-                    b.Property<int>("TableId")
+                    b.Property<int>("TableNumber")
                         .HasColumnType("int");
 
                     b.Property<decimal>("Total")
@@ -82,9 +56,7 @@ namespace Restoran.Migrations
 
                     b.HasIndex("RestaurantId");
 
-                    b.HasIndex("TableId");
-
-                    b.ToTable("ArchivedOrders");
+                    b.ToTable("ArchivedOrders", (string)null);
                 });
 
             modelBuilder.Entity("Restoran.Models.Bill", b =>
@@ -107,16 +79,6 @@ namespace Restoran.Migrations
                     b.Property<DateTime?>("PaidAt")
                         .HasColumnType("datetime2");
 
-                    b.Property<string>("PaymentMethod")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<decimal>("Subtotal")
-                        .HasColumnType("decimal(18,2)");
-
-                    b.Property<decimal>("Tax")
-                        .HasColumnType("decimal(18,2)");
-
                     b.Property<decimal>("Total")
                         .HasColumnType("decimal(18,2)");
 
@@ -125,63 +87,7 @@ namespace Restoran.Migrations
                     b.HasIndex("OrderId")
                         .IsUnique();
 
-                    b.ToTable("Bills");
-                });
-
-            modelBuilder.Entity("Restoran.Models.Invoice", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("datetime2");
-
-                    b.Property<DateTime>("DueDate")
-                        .HasColumnType("datetime2");
-
-                    b.Property<string>("InvoiceNumber")
-                        .IsRequired()
-                        .HasMaxLength(50)
-                        .HasColumnType("nvarchar(50)");
-
-                    b.Property<bool>("IsPaid")
-                        .HasColumnType("bit");
-
-                    b.Property<string>("Notes")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<int>("OrderId")
-                        .HasColumnType("int");
-
-                    b.Property<DateTime?>("PaidAt")
-                        .HasColumnType("datetime2");
-
-                    b.Property<string>("PaymentMethod")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<decimal>("Subtotal")
-                        .HasColumnType("decimal(18,2)");
-
-                    b.Property<decimal>("Tax")
-                        .HasColumnType("decimal(18,2)");
-
-                    b.Property<decimal>("Total")
-                        .HasColumnType("decimal(18,2)");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("InvoiceNumber")
-                        .IsUnique();
-
-                    b.HasIndex("OrderId")
-                        .IsUnique();
-
-                    b.ToTable("Invoices");
+                    b.ToTable("Bills", (string)null);
                 });
 
             modelBuilder.Entity("Restoran.Models.MenuItem", b =>
@@ -192,19 +98,7 @@ namespace Restoran.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
-                    b.Property<string>("Allergens")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
                     b.Property<string>("Category")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("Description")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("DietaryInfo")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
@@ -226,7 +120,7 @@ namespace Restoran.Migrations
 
                     b.HasIndex("RestaurantId");
 
-                    b.ToTable("MenuItems");
+                    b.ToTable("MenuItems", (string)null);
                 });
 
             modelBuilder.Entity("Restoran.Models.Notification", b =>
@@ -251,9 +145,6 @@ namespace Restoran.Migrations
                     b.Property<int>("OrderId")
                         .HasColumnType("int");
 
-                    b.Property<DateTime?>("ReadAt")
-                        .HasColumnType("datetime2");
-
                     b.Property<int>("Type")
                         .HasColumnType("int");
 
@@ -266,7 +157,7 @@ namespace Restoran.Migrations
 
                     b.HasIndex("UserId");
 
-                    b.ToTable("Notifications");
+                    b.ToTable("Notifications", (string)null);
                 });
 
             modelBuilder.Entity("Restoran.Models.Order", b =>
@@ -277,37 +168,15 @@ namespace Restoran.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
-                    b.Property<int?>("AssignedCookId")
-                        .HasColumnType("int");
-
-                    b.Property<int?>("AssignedWaiterId")
-                        .HasColumnType("int");
-
-                    b.Property<DateTime?>("CompletedAt")
-                        .HasColumnType("datetime2");
-
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("datetime2");
 
-                    b.Property<string>("CustomerName")
+                    b.Property<string>("Notes")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
-
-                    b.Property<DateTime?>("ReadyAt")
-                        .HasColumnType("datetime2");
 
                     b.Property<int>("RestaurantId")
                         .HasColumnType("int");
-
-                    b.Property<DateTime?>("SentToKitchenAt")
-                        .HasColumnType("datetime2");
-
-                    b.Property<DateTime?>("ServedAt")
-                        .HasColumnType("datetime2");
-
-                    b.Property<string>("SpecialRequirements")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
 
                     b.Property<int>("Status")
                         .HasColumnType("int");
@@ -317,15 +186,11 @@ namespace Restoran.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("AssignedCookId");
-
-                    b.HasIndex("AssignedWaiterId");
-
                     b.HasIndex("RestaurantId");
 
                     b.HasIndex("TableId");
 
-                    b.ToTable("Orders");
+                    b.ToTable("Orders", (string)null);
                 });
 
             modelBuilder.Entity("Restoran.Models.OrderItem", b =>
@@ -342,15 +207,11 @@ namespace Restoran.Migrations
                     b.Property<int>("OrderId")
                         .HasColumnType("int");
 
-                    b.Property<decimal>("PriceAtOrder")
+                    b.Property<decimal>("Price")
                         .HasColumnType("decimal(18,2)");
 
                     b.Property<int>("Quantity")
                         .HasColumnType("int");
-
-                    b.Property<string>("SpecialInstructions")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
 
                     b.HasKey("Id");
 
@@ -358,41 +219,7 @@ namespace Restoran.Migrations
 
                     b.HasIndex("OrderId");
 
-                    b.ToTable("OrderItems");
-                });
-
-            modelBuilder.Entity("Restoran.Models.RefreshToken", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("datetime2");
-
-                    b.Property<DateTime>("ExpiresAt")
-                        .HasColumnType("datetime2");
-
-                    b.Property<bool>("IsRevoked")
-                        .HasColumnType("bit");
-
-                    b.Property<string>("Token")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(450)");
-
-                    b.Property<int>("UserId")
-                        .HasColumnType("int");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("Token")
-                        .IsUnique();
-
-                    b.HasIndex("UserId");
-
-                    b.ToTable("RefreshTokens");
+                    b.ToTable("OrderItems", (string)null);
                 });
 
             modelBuilder.Entity("Restoran.Models.Restaurant", b =>
@@ -407,9 +234,6 @@ namespace Restoran.Migrations
                         .IsRequired()
                         .HasMaxLength(500)
                         .HasColumnType("nvarchar(500)");
-
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("datetime2");
 
                     b.Property<string>("DietTags")
                         .IsRequired()
@@ -426,7 +250,7 @@ namespace Restoran.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("Restaurants");
+                    b.ToTable("Restaurants", (string)null);
                 });
 
             modelBuilder.Entity("Restoran.Models.Table", b =>
@@ -437,23 +261,20 @@ namespace Restoran.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
-                    b.Property<int>("Capacity")
+                    b.Property<int>("Number")
                         .HasColumnType("int");
 
                     b.Property<int>("RestaurantId")
                         .HasColumnType("int");
 
-                    b.Property<int>("Status")
-                        .HasColumnType("int");
-
-                    b.Property<int>("TableNumber")
+                    b.Property<int>("Seats")
                         .HasColumnType("int");
 
                     b.HasKey("Id");
 
                     b.HasIndex("RestaurantId");
 
-                    b.ToTable("Tables");
+                    b.ToTable("Tables", (string)null);
                 });
 
             modelBuilder.Entity("Restoran.Models.User", b =>
@@ -464,33 +285,7 @@ namespace Restoran.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("datetime2");
-
-                    b.Property<string>("Email")
-                        .IsRequired()
-                        .HasMaxLength(100)
-                        .HasColumnType("nvarchar(100)");
-
-                    b.Property<string>("FirstName")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<bool>("IsActive")
-                        .HasColumnType("bit");
-
-                    b.Property<DateTime?>("LastLoginAt")
-                        .HasColumnType("datetime2");
-
-                    b.Property<string>("LastName")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
                     b.Property<string>("PasswordHash")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("PhoneNumber")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
@@ -507,34 +302,23 @@ namespace Restoran.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("Email")
-                        .IsUnique();
-
                     b.HasIndex("RestaurantId");
 
                     b.HasIndex("Username")
                         .IsUnique();
 
-                    b.ToTable("Users");
+                    b.ToTable("Users", (string)null);
                 });
 
             modelBuilder.Entity("Restoran.Models.ArchivedOrder", b =>
                 {
                     b.HasOne("Restoran.Models.Restaurant", "Restaurant")
-                        .WithMany("ArchivedOrders")
-                        .HasForeignKey("RestaurantId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("Restoran.Models.Table", "Table")
                         .WithMany()
-                        .HasForeignKey("TableId")
+                        .HasForeignKey("RestaurantId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
                     b.Navigation("Restaurant");
-
-                    b.Navigation("Table");
                 });
 
             modelBuilder.Entity("Restoran.Models.Bill", b =>
@@ -542,17 +326,6 @@ namespace Restoran.Migrations
                     b.HasOne("Restoran.Models.Order", "Order")
                         .WithOne("Bill")
                         .HasForeignKey("Restoran.Models.Bill", "OrderId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Order");
-                });
-
-            modelBuilder.Entity("Restoran.Models.Invoice", b =>
-                {
-                    b.HasOne("Restoran.Models.Order", "Order")
-                        .WithOne("Invoice")
-                        .HasForeignKey("Restoran.Models.Invoice", "OrderId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
@@ -591,16 +364,6 @@ namespace Restoran.Migrations
 
             modelBuilder.Entity("Restoran.Models.Order", b =>
                 {
-                    b.HasOne("Restoran.Models.User", "AssignedCook")
-                        .WithMany()
-                        .HasForeignKey("AssignedCookId")
-                        .OnDelete(DeleteBehavior.SetNull);
-
-                    b.HasOne("Restoran.Models.User", "AssignedWaiter")
-                        .WithMany("Orders")
-                        .HasForeignKey("AssignedWaiterId")
-                        .OnDelete(DeleteBehavior.SetNull);
-
                     b.HasOne("Restoran.Models.Restaurant", "Restaurant")
                         .WithMany("Orders")
                         .HasForeignKey("RestaurantId")
@@ -612,10 +375,6 @@ namespace Restoran.Migrations
                         .HasForeignKey("TableId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
-
-                    b.Navigation("AssignedCook");
-
-                    b.Navigation("AssignedWaiter");
 
                     b.Navigation("Restaurant");
 
@@ -639,17 +398,6 @@ namespace Restoran.Migrations
                     b.Navigation("MenuItem");
 
                     b.Navigation("Order");
-                });
-
-            modelBuilder.Entity("Restoran.Models.RefreshToken", b =>
-                {
-                    b.HasOne("Restoran.Models.User", "User")
-                        .WithMany()
-                        .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("User");
                 });
 
             modelBuilder.Entity("Restoran.Models.Table", b =>
@@ -682,8 +430,6 @@ namespace Restoran.Migrations
                 {
                     b.Navigation("Bill");
 
-                    b.Navigation("Invoice");
-
                     b.Navigation("Notifications");
 
                     b.Navigation("OrderItems");
@@ -691,8 +437,6 @@ namespace Restoran.Migrations
 
             modelBuilder.Entity("Restoran.Models.Restaurant", b =>
                 {
-                    b.Navigation("ArchivedOrders");
-
                     b.Navigation("MenuItems");
 
                     b.Navigation("Orders");
@@ -703,11 +447,6 @@ namespace Restoran.Migrations
                 });
 
             modelBuilder.Entity("Restoran.Models.Table", b =>
-                {
-                    b.Navigation("Orders");
-                });
-
-            modelBuilder.Entity("Restoran.Models.User", b =>
                 {
                     b.Navigation("Orders");
                 });

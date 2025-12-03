@@ -11,14 +11,5 @@ namespace Restoran.DTOs
         public string Message { get; set; } = string.Empty;
         public bool IsRead { get; set; }
         public DateTime CreatedAt { get; set; }
-        public DateTime? ReadAt { get; set; }
-    }
-
-    public class CreateNotificationDto
-    {
-        public int UserId { get; set; }
-        public int OrderId { get; set; }
-        public NotificationType Type { get; set; }
-        public string Message { get; set; } = string.Empty;
     }
 }

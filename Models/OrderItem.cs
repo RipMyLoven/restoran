@@ -6,9 +6,8 @@ namespace Restoran.Models
         public int OrderId { get; set; }
         public int MenuItemId { get; set; }
         public int Quantity { get; set; }
-        public decimal PriceAtOrder { get; set; }
-        public string SpecialInstructions { get; set; } = string.Empty;
-        
+        public decimal Price { get; set; }
+
         public Order Order { get; set; } = null!;
         public MenuItem MenuItem { get; set; } = null!;
     }

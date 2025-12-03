@@ -1,16 +1,17 @@
-using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using System.Text.Json;
 using Restoran.Data;
 using Restoran.Models;
 using Restoran.DTOs;
-using System.Text.Json;
 
 namespace Restoran.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
-    [Authorize]
+    [Produces("application/json")]
+    [Authorize] // Требуется авторизация
     public class ArchiveController : ControllerBase
     {
         private readonly ApplicationDbContext _context;
@@ -20,9 +21,46 @@ namespace Restoran.Controllers
             _context = context;
         }
 
-        [HttpPost("orders/{orderId}/archive")]
-        [Authorize(Roles = "Admin,Manager")]
-        public async Task<IActionResult> ArchiveOrder(int orderId)
+        /// <summary>
+        /// Получить архивные заказы
+        /// </summary>
+        [HttpGet]
+        [Authorize(Roles = "Admin")]
+        [ProducesResponseType(typeof(IEnumerable<ArchivedOrderDto>), 200)]
+        public async Task<ActionResult<IEnumerable<ArchivedOrderDto>>> GetArchivedOrders(
+            [FromQuery] int? restaurantId = null)
+        {
+            var query = _context.ArchivedOrders.AsQueryable();
+
+            if (restaurantId.HasValue)
+                query = query.Where(a => a.RestaurantId == restaurantId.Value);
+
+            var archived = await query
+                .OrderByDescending(a => a.ArchivedAt)
+                .Select(a => new ArchivedOrderDto
+                {
+                    Id = a.Id,
+                    OriginalOrderId = a.OriginalOrderId,
+                    RestaurantId = a.RestaurantId,
+                    TableNumber = a.TableNumber,
+                    OrderItemsJson = a.OrderItemsJson,
+                    Total = a.Total,
+                    OrderCreatedAt = a.OrderCreatedAt,
+                    ArchivedAt = a.ArchivedAt
+                }).ToListAsync();
+
+            return Ok(archived);
+        }
+
+        /// <summary>
+        /// Архивировать заказ (переместить в архив)
+        /// </summary>
+        [HttpPost("{orderId}")]
+        [Authorize(Roles = "Admin")]
+        [ProducesResponseType(typeof(ArchivedOrderDto), 201)]
+        [ProducesResponseType(400)]
+        [ProducesResponseType(404)]
+        public async Task<ActionResult<ArchivedOrderDto>> ArchiveOrder(int orderId)
         {
             var order = await _context.Orders
                 .Include(o => o.Table)
@@ -31,98 +69,71 @@ namespace Restoran.Controllers
                 .FirstOrDefaultAsync(o => o.Id == orderId);
 
             if (order == null)
-            {
                 return NotFound("Order not found");
-            }
 
-            if (order.Status != OrderStatus.Completed && order.Status != OrderStatus.Cancelled)
-            {
-                return BadRequest("Only completed or cancelled orders can be archived");
-            }
+            if (order.Status != OrderStatus.Completed)
+                return BadRequest("Only completed orders can be archived");
 
-            // Serialize order items
             var orderItemsData = order.OrderItems.Select(oi => new
             {
                 MenuItemName = oi.MenuItem.Name,
                 Quantity = oi.Quantity,
-                Price = oi.PriceAtOrder,
-                SpecialInstructions = oi.SpecialInstructions
-            }).ToList();
+                Price = oi.Price
+            });
 
-            var archivedOrder = new ArchivedOrder
+            var archived = new ArchivedOrder
             {
                 OriginalOrderId = order.Id,
-                TableId = order.TableId,
                 RestaurantId = order.RestaurantId,
-                Status = order.Status.ToString(),
-                SpecialRequirements = order.SpecialRequirements,
-                CustomerName = order.CustomerName,
-                CreatedAt = order.CreatedAt,
-                SentToKitchenAt = order.SentToKitchenAt,
-                ReadyAt = order.ReadyAt,
-                ServedAt = order.ServedAt,
-                CompletedAt = order.CompletedAt,
+                TableNumber = order.Table.Number,
                 OrderItemsJson = JsonSerializer.Serialize(orderItemsData),
-                Total = order.OrderItems.Sum(oi => oi.PriceAtOrder * oi.Quantity)
+                Total = order.OrderItems.Sum(oi => oi.Price * oi.Quantity),
+                OrderCreatedAt = order.CreatedAt
             };
 
-            _context.Set<ArchivedOrder>().Add(archivedOrder);
-
-            // Remove original order and related data
+            _context.ArchivedOrders.Add(archived);
             _context.Orders.Remove(order);
-
             await _context.SaveChangesAsync();
 
-            return Ok(new { message = "Order archived successfully", archivedOrderId = archivedOrder.Id });
+            return CreatedAtAction(nameof(GetArchivedOrders), new ArchivedOrderDto
+            {
+                Id = archived.Id,
+                OriginalOrderId = archived.OriginalOrderId,
+                RestaurantId = archived.RestaurantId,
+                TableNumber = archived.TableNumber,
+                OrderItemsJson = archived.OrderItemsJson,
+                Total = archived.Total,
+                OrderCreatedAt = archived.OrderCreatedAt,
+                ArchivedAt = archived.ArchivedAt
+            });
         }
 
-        [HttpGet("orders")]
-        public async Task<ActionResult<IEnumerable<object>>> GetArchivedOrders(
-            [FromQuery] int? restaurantId = null,
-            [FromQuery] DateTime? fromDate = null,
-            [FromQuery] DateTime? toDate = null)
+        /// <summary>
+        /// Получить статистику по заказам
+        /// </summary>
+        [HttpGet("statistics")]
+        [ProducesResponseType(typeof(StatisticsDto), 200)]
+        public async Task<ActionResult<StatisticsDto>> GetStatistics([FromQuery] int? restaurantId = null)
         {
-            var query = _context.Set<ArchivedOrder>().AsQueryable();
+            var query = _context.ArchivedOrders.AsQueryable();
 
             if (restaurantId.HasValue)
+                query = query.Where(a => a.RestaurantId == restaurantId.Value);
+
+            var allOrders = await query.ToListAsync();
+            var today = DateTime.UtcNow.Date;
+            var todayOrders = allOrders.Where(o => o.ArchivedAt.Date == today).ToList();
+
+            var stats = new StatisticsDto
             {
-                query = query.Where(ao => ao.RestaurantId == restaurantId.Value);
-            }
+                TotalOrders = allOrders.Count,
+                TotalRevenue = allOrders.Sum(o => o.Total),
+                AverageOrderValue = allOrders.Count > 0 ? allOrders.Average(o => o.Total) : 0,
+                OrdersToday = todayOrders.Count,
+                RevenueToday = todayOrders.Sum(o => o.Total)
+            };
 
-            if (fromDate.HasValue)
-            {
-                query = query.Where(ao => ao.CreatedAt >= fromDate.Value);
-            }
-
-            if (toDate.HasValue)
-            {
-                query = query.Where(ao => ao.CreatedAt <= toDate.Value);
-            }
-
-            var archivedOrders = await query
-                .OrderByDescending(ao => ao.ArchivedAt)
-                .ToListAsync();
-
-            var result = archivedOrders.Select(ao => new
-            {
-                Id = ao.Id,
-                OriginalOrderId = ao.OriginalOrderId,
-                TableId = ao.TableId,
-                RestaurantId = ao.RestaurantId,
-                Status = ao.Status,
-                SpecialRequirements = ao.SpecialRequirements,
-                CustomerName = ao.CustomerName,
-                CreatedAt = ao.CreatedAt,
-                SentToKitchenAt = ao.SentToKitchenAt,
-                ReadyAt = ao.ReadyAt,
-                ServedAt = ao.ServedAt,
-                CompletedAt = ao.CompletedAt,
-                ArchivedAt = ao.ArchivedAt,
-                Total = ao.Total,
-                OrderItems = JsonSerializer.Deserialize<List<object>>(ao.OrderItemsJson)
-            }).ToList();
-
-            return Ok(result);
+            return Ok(stats);
         }
     }
 }

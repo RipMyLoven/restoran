@@ -1,117 +1,159 @@
-export type UserRole = {
-  Admin: 0,
-  Manager: 1,
-  Waiter: 2,
-  Cook: 3,
-  Customer: 4,
-}
-
+// User types
 export interface User {
-  id: number;
-  username: string;
-  email: string;
-  firstName: string;
-  lastName: string;
-  phoneNumber: string;
-  role: UserRole;
-  restaurantId?: number;
-  isActive: boolean;
-  createdAt: string;
-  lastLoginAt?: string;
-}
-
-export interface LoginDto {
-  username: string;
-  password: string;
-}
-
-export interface RegisterDto {
-  username: string;
-  email: string;
-  password: string;
-  firstName: string;
-  lastName: string;
-  phoneNumber: string;
-  restaurantId?: number;
+    id: number;
+    username: string;
+    role: 'Admin' | 'Waiter' | 'Cook';
+    restaurantId?: number;
 }
 
 export interface AuthResponse {
-  token: string;
-  refreshToken: string;
-  user: User;
+    token: string;
+    user: User;
 }
 
-export type OrderStatus = {
-  New: 0,
-  SentToKitchen: 1,
-  InProgress: 2,
-  Ready: 3,
-  Served: 4,
-  Completed: 5,
-  Cancelled: 6,
+export interface LoginCredentials {
+    username: string;
+    password: string;
 }
+
+export interface CreateUserDto {
+    username: string;
+    password: string;
+    role: 'Admin' | 'Waiter' | 'Cook';
+    restaurantId?: number;
+}
+
+// Restaurant types
+export interface Restaurant {
+    id: number;
+    name: string;
+    tableCount: number;
+    allergyTags?: string;
+    dietTags?: string;
+}
+
+export interface CreateRestaurantDto {
+    name: string;
+    tableCount: number;
+    allergyTags?: string;
+    dietTags?: string;
+}
+
+export interface UpdateRestaurantDto {
+    name: string;
+    tableCount: number;
+    allergyTags?: string;
+    dietTags?: string;
+}
+
+// Table types
+export interface Table {
+    id: number;
+    tableNumber: number;
+    restaurantId: number;
+}
+
+export interface CreateTableDto {
+    tableNumber: number;
+    restaurantId: number;
+}
+
+// MenuItem types
+export interface MenuItem {
+    id: number;
+    name: string;
+    price: number;
+    restaurantId: number;
+}
+
+export interface CreateMenuItemDto {
+    name: string;
+    price: number;
+    restaurantId: number;
+}
+
+export interface UpdateMenuItemDto {
+    name: string;
+    price: number;
+}
+
+// Order types
+export type OrderStatus = 'Pending' | 'Preparing' | 'Ready' | 'Completed' | 'Cancelled';
 
 export interface OrderItem {
-  id: number;
-  orderId: number;
-  menuItemId: number;
-  quantity: number;
-  unitPrice: number;
-  totalPrice: number;
-  specialRequirements?: string;
+    id: number;
+    menuItemId: number;
+    menuItemName?: string;
+    quantity: number;
+    price: number;
 }
 
 export interface Order {
-  id: number;
-  tableId: number;
-  restaurantId: number;
-  assignedWaiterId?: number;
-  assignedCookId?: number;
-  status: OrderStatus;
-  specialRequirements: string;
-  customerName: string;
-  createdAt: string;
-  sentToKitchenAt?: string;
-  readyAt?: string;
-  servedAt?: string;
-  completedAt?: string;
-  orderItems: OrderItem[];
+    id: number;
+    tableId: number;
+    tableNumber?: number;
+    status: OrderStatus;
+    notes?: string;
+    orderItems: OrderItem[];
+    total: number;
 }
 
-export interface MenuItem {
-  id: number;
-  restaurantId: number;
-  name: string;
-  description: string;
-  price: number;
-  category: string;
-  imageUrl?: string;
-  isAvailable: boolean;
-  preparationTime: number;
+export interface CreateOrderItemDto {
+    menuItemId: number;
+    quantity: number;
 }
 
-export interface Table {
-  id: number;
-  restaurantId: number;
-  tableNumber: string;
-  capacity: number;
-  isOccupied: boolean;
-  currentOrderId?: number;
+export interface CreateOrderDto {
+    tableId: number;
+    notes?: string;
+    orderItems: CreateOrderItemDto[];
 }
 
-export interface Restaurant {
-  id: number;
-  name: string;
-  address: string;
-  phoneNumber: string;
-  email: string;
-  isActive: boolean;
+export interface UpdateOrderStatusDto {
+    status: OrderStatus;
 }
+
+// Bill types
+export interface Bill {
+    id: number;
+    orderId: number;
+    total: number;
+    isPaid: boolean;
+    createdAt: string;
+    paidAt?: string;
+}
+
+export interface CreateBillDto {
+    orderId: number;
+}
+
+// Notification types
+export type NotificationType = 'OrderCreated' | 'OrderReady';
 
 export interface Notification {
-  id: number;
-  orderId: number;
-  message: string;
-  createdAt: string;
-  isRead: boolean;
+    id: number;
+    userId: number;
+    orderId: number;
+    type: NotificationType;
+    message: string;
+    isRead: boolean;
+    createdAt: string;
+}
+
+// Archive types
+export interface ArchivedOrder {
+    id: number;
+    originalOrderId: number;
+    restaurantId: number;
+    tableNumber: number;
+    orderItemsJson: string;
+    total: number;
+    createdAt: string;
+    archivedAt: string;
+}
+
+export interface Statistics {
+    totalOrders: number;
+    totalRevenue: number;
+    averageOrderValue: number;
 }

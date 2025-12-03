@@ -1,5 +1,5 @@
-using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Restoran.Data;
 using Restoran.Models;
@@ -9,7 +9,8 @@ namespace Restoran.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
-    [Authorize]
+    [Produces("application/json")]
+    [Authorize] // Требуется авторизация
     public class NotificationsController : ControllerBase
     {
         private readonly ApplicationDbContext _context;
@@ -19,82 +20,74 @@ namespace Restoran.Controllers
             _context = context;
         }
 
-        [HttpPost("orders/{orderId}/notify/cook")]
-        [Authorize(Roles = "Admin,Manager,Waiter")]
-        public async Task<IActionResult> NotifyCook(int orderId)
+        /// <summary>
+        /// Получить уведомления для пользователя
+        /// </summary>
+        [HttpGet]
+        [ProducesResponseType(typeof(IEnumerable<NotificationDto>), 200)]
+        public async Task<ActionResult<IEnumerable<NotificationDto>>> GetNotifications(
+            [FromQuery] int? userId = null,
+            [FromQuery] bool? unreadOnly = null)
         {
-            var order = await _context.Orders.FindAsync(orderId);
-            if (order == null)
-            {
-                return NotFound("Order not found");
-            }
+            var query = _context.Notifications.AsQueryable();
 
-            // Find cooks in the restaurant
-            var cooks = await _context.Users
-                .Where(u => u.RestaurantId == order.RestaurantId && u.Role == UserRole.Cook && u.IsActive)
-                .ToListAsync();
+            if (userId.HasValue)
+                query = query.Where(n => n.UserId == userId.Value);
 
-            foreach (var cook in cooks)
-            {
-                var notification = new Notification
+            if (unreadOnly == true)
+                query = query.Where(n => !n.IsRead);
+
+            var notifications = await query
+                .OrderByDescending(n => n.CreatedAt)
+                .Select(n => new NotificationDto
                 {
-                    UserId = cook.Id,
-                    OrderId = orderId,
-                    Type = NotificationType.OrderSentToKitchen,
-                    Message = $"New order #{orderId} sent to kitchen - Table {order.TableId}"
-                };
+                    Id = n.Id,
+                    UserId = n.UserId,
+                    OrderId = n.OrderId,
+                    Type = n.Type,
+                    Message = n.Message,
+                    IsRead = n.IsRead,
+                    CreatedAt = n.CreatedAt
+                }).ToListAsync();
 
-                _context.Notifications.Add(notification);
-            }
-
-            await _context.SaveChangesAsync();
-
-            return Ok(new { message = "Cook notifications sent successfully" });
+            return Ok(notifications);
         }
 
-        [HttpPost("orders/{orderId}/notify/waiter")]
-        [Authorize(Roles = "Admin,Manager,Cook")]
-        public async Task<IActionResult> NotifyWaiter(int orderId)
+        /// <summary>
+        /// Отметить уведомление как прочитанное
+        /// </summary>
+        [HttpPatch("{id}/read")]
+        [ProducesResponseType(200)]
+        [ProducesResponseType(404)]
+        public async Task<IActionResult> MarkAsRead(int id)
         {
-            var order = await _context.Orders
-                .Include(o => o.AssignedWaiter)
-                .FirstOrDefaultAsync(o => o.Id == orderId);
+            var notification = await _context.Notifications.FindAsync(id);
+            if (notification == null)
+                return NotFound();
 
-            if (order == null)
-            {
-                return NotFound("Order not found");
-            }
+            notification.IsRead = true;
+            await _context.SaveChangesAsync();
 
-            // Notify assigned waiter or all waiters if no specific waiter assigned
-            var waiters = new List<User>();
+            return Ok(new { message = "Marked as read" });
+        }
 
-            if (order.AssignedWaiter != null)
-            {
-                waiters.Add(order.AssignedWaiter);
-            }
-            else
-            {
-                waiters = await _context.Users
-                    .Where(u => u.RestaurantId == order.RestaurantId && u.Role == UserRole.Waiter && u.IsActive)
-                    .ToListAsync();
-            }
+        /// <summary>
+        /// Отметить все уведомления пользователя как прочитанные
+        /// </summary>
+        [HttpPatch("read-all")]
+        [ProducesResponseType(200)]
+        public async Task<IActionResult> MarkAllAsRead([FromQuery] int userId)
+        {
+            var notifications = await _context.Notifications
+                .Where(n => n.UserId == userId && !n.IsRead)
+                .ToListAsync();
 
-            foreach (var waiter in waiters)
-            {
-                var notification = new Notification
-                {
-                    UserId = waiter.Id,
-                    OrderId = orderId,
-                    Type = NotificationType.OrderReady,
-                    Message = $"Order #{orderId} is ready - Table {order.TableId}"
-                };
-
-                _context.Notifications.Add(notification);
-            }
+            foreach (var n in notifications)
+                n.IsRead = true;
 
             await _context.SaveChangesAsync();
 
-            return Ok(new { message = "Waiter notifications sent successfully" });
+            return Ok(new { message = $"Marked {notifications.Count} notifications as read" });
         }
     }
 }
