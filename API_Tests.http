@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # Restaurant Management API - Quick HTTP Tests
 # Use this file with REST Client extension in VS Code
 # Install: https://marketplace.visualstudio.com/items?itemName=humao.rest-client
@@ -155,3 +156,174 @@ GET {{baseUrl}}/health HTTP/1.1
 ###
 # Swagger Documentation (open in browser)
 # GET http://localhost:5110/swagger
+=======
+# Restaurant Management API - Quick HTTP Tests
+# Use this file with REST Client extension in VS Code
+# Install: https://marketplace.visualstudio.com/items?itemName=humao.rest-client
+
+@baseUrl = http://localhost:5110/api
+@accessToken = 
+
+### Register Admin User
+POST {{baseUrl}}/auth/register HTTP/1.1
+Content-Type: application/json
+
+{
+  "username": "admin",
+  "email": "admin@restaurant.com", 
+  "password": "Admin123!",
+  "firstName": "Admin",
+  "lastName": "User",
+  "phoneNumber": "+1234567890"
+}
+
+### Login Admin User (Copy the accessToken from response)
+POST {{baseUrl}}/auth/login HTTP/1.1
+Content-Type: application/json
+
+{
+  "usernameOrEmail": "admin",
+  "password": "Admin123!"
+}
+
+### Create Restaurant
+POST {{baseUrl}}/restaurants HTTP/1.1
+Content-Type: application/json
+Authorization: Bearer {{accessToken}}
+
+{
+  "name": "Test Restaurant",
+  "tableCount": 15,
+  "allergyTags": "nuts,dairy,gluten,shellfish",
+  "dietTags": "vegetarian,vegan,keto,gluten-free"
+}
+
+### Get All Restaurants
+GET {{baseUrl}}/restaurants HTTP/1.1
+Authorization: Bearer {{accessToken}}
+
+### Get Restaurant By ID (replace 1 with actual restaurant ID)
+GET {{baseUrl}}/restaurants/1 HTTP/1.1
+Authorization: Bearer {{accessToken}}
+
+### Get Restaurant Tables (replace 1 with actual restaurant ID)
+GET {{baseUrl}}/restaurants/1/tables HTTP/1.1
+Authorization: Bearer {{accessToken}}
+
+### Create Menu Item (replace 1 with actual restaurant ID)
+POST {{baseUrl}}/restaurants/1/menu HTTP/1.1
+Content-Type: application/json
+Authorization: Bearer {{accessToken}}
+
+{
+  "name": "Caesar Salad",
+  "description": "Fresh romaine lettuce with Caesar dressing, croutons and parmesan",
+  "price": 12.99,
+  "category": "Appetizer",
+  "allergyInfo": "dairy,gluten",
+  "dietInfo": "vegetarian",
+  "isAvailable": true
+}
+
+### Get Restaurant Menu (replace 1 with actual restaurant ID)
+GET {{baseUrl}}/restaurants/1/menu HTTP/1.1
+Authorization: Bearer {{accessToken}}
+
+### Create Order (replace IDs with actual values)
+POST {{baseUrl}}/orders HTTP/1.1
+Content-Type: application/json
+Authorization: Bearer {{accessToken}}
+
+{
+  "tableId": 1,
+  "restaurantId": 1,
+  "customerName": "John Smith",
+  "specialRequirements": "No nuts, light on salt",
+  "orderItems": [
+    {
+      "menuItemId": 1,
+      "quantity": 1,
+      "specialRequirements": "Extra dressing on the side"
+    }
+  ]
+}
+
+### Get All Orders
+GET {{baseUrl}}/orders HTTP/1.1
+Authorization: Bearer {{accessToken}}
+
+### Update Order Status (replace 1 with actual order ID)
+PATCH {{baseUrl}}/orders/1/status HTTP/1.1
+Content-Type: application/json
+Authorization: Bearer {{accessToken}}
+
+{
+  "status": "SentToKitchen"
+}
+
+### Create Invoice (replace 1 with actual order ID)
+POST {{baseUrl}}/invoices/orders/1/invoice HTTP/1.1
+Content-Type: application/json
+Authorization: Bearer {{accessToken}}
+
+{
+  "notes": "Thank you for your business!"
+}
+
+### Get Order Statistics
+GET {{baseUrl}}/stats/orders HTTP/1.1
+Authorization: Bearer {{accessToken}}
+
+### Get Kitchen Statistics
+GET {{baseUrl}}/stats/kitchen HTTP/1.1
+Authorization: Bearer {{accessToken}}
+
+### Get Waiter Statistics
+GET {{baseUrl}}/stats/waiters HTTP/1.1
+Authorization: Bearer {{accessToken}}
+
+### Archive Order (replace 1 with actual order ID)
+POST {{baseUrl}}/archive/orders/1/archive HTTP/1.1
+Authorization: Bearer {{accessToken}}
+
+### Get Archived Orders
+GET {{baseUrl}}/archive/orders HTTP/1.1
+Authorization: Bearer {{accessToken}}
+
+### Get All Notifications
+GET {{baseUrl}}/notifications HTTP/1.1
+Authorization: Bearer {{accessToken}}
+
+### Notify Cook about Order (replace 1 with actual order ID)
+POST {{baseUrl}}/notifications/orders/1/notify/cook HTTP/1.1
+Authorization: Bearer {{accessToken}}
+
+### Notify Waiter about Order Ready (replace 1 with actual order ID)
+POST {{baseUrl}}/notifications/orders/1/notify/waiter HTTP/1.1
+Authorization: Bearer {{accessToken}}
+
+### Refresh Token (replace with actual refresh token)
+POST {{baseUrl}}/auth/refresh HTTP/1.1
+Content-Type: application/json
+
+{
+  "refreshToken": "your-refresh-token-here"
+}
+
+### Logout
+POST {{baseUrl}}/auth/logout HTTP/1.1
+Content-Type: application/json
+Authorization: Bearer {{accessToken}}
+
+{
+  "refreshToken": "your-refresh-token-here"
+}
+
+###
+# Health Check (should work without authentication)
+GET {{baseUrl}}/health HTTP/1.1
+
+###
+# Swagger Documentation (open in browser)
+# GET http://localhost:5110/swagger
+>>>>>>> 34174913b0dfb2360f689b5dc65aa2ea5b55f15d
