@@ -6,9 +6,12 @@ import { Select } from '../components/Select';
 import { DataTable } from '../components/DataTable';
 import { Modal } from '../components/Modal';
 import { menuItemsApi, restaurantsApi } from '../api';
+import { useAuth } from '../context/AuthContext';
 import type { MenuItem, CreateMenuItemDto, Restaurant } from '../types';
 
 export function MenuPage() {
+  const { user } = useAuth();
+  const isAdmin = user?.role === 'Admin';
   const [menuItems, setMenuItems] = useState<MenuItem[]>([]);
   const [restaurants, setRestaurants] = useState<Restaurant[]>([]);
   const [loading, setLoading] = useState(true);
@@ -106,7 +109,7 @@ export function MenuPage() {
       header: 'Restaurant',
       render: (item: MenuItem) => getRestaurantName(item.restaurantId)
     },
-    {
+    ...(isAdmin ? [{
       key: 'actions',
       header: 'Actions',
       render: (item: MenuItem) => (
@@ -119,7 +122,7 @@ export function MenuPage() {
           </Button>
         </div>
       )
-    }
+    }] : [])
   ];
 
   if (loading) return <div>Loading...</div>;
@@ -128,7 +131,9 @@ export function MenuPage() {
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <h1 className="text-3xl font-bold text-gray-900">Menu Items</h1>
-        <Button onClick={() => setIsModalOpen(true)}>Add Menu Item</Button>
+        {isAdmin && (
+          <Button onClick={() => setIsModalOpen(true)}>Add Menu Item</Button>
+        )}
       </div>
 
       <div className="flex gap-4">

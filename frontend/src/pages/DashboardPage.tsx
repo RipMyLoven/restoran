@@ -39,7 +39,7 @@ export function DashboardPage() {
   };
 
   const activeOrders = orders.filter(o => o.status !== 'Completed' && o.status !== 'Cancelled');
-  const pendingOrders = orders.filter(o => o.status === 'Pending');
+  const pendingOrders = orders.filter(o => o.status === 'New');
   const unreadNotifications = notifications.filter(n => !n.isRead);
 
   if (loading) {
@@ -111,8 +111,8 @@ export function DashboardPage() {
                     <Badge 
                       variant={
                         order.status === 'Ready' ? 'success' :
-                        order.status === 'Preparing' ? 'info' :
-                        order.status === 'Pending' ? 'warning' : 'default'
+                        order.status === 'InProgress' ? 'info' :
+                        order.status === 'New' ? 'warning' : 'default'
                       }
                     >
                       {order.status}
