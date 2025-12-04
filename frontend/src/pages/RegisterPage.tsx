@@ -4,7 +4,7 @@ import { Button } from '../components/Button';
 import { Input } from '../components/Input';
 import { Select } from '../components/Select';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '../components/Card';
-import { usersApi } from '../api';
+import { authApi } from '../api';
 
 export function RegisterPage() {
   const [formData, setFormData] = useState({
@@ -14,7 +14,6 @@ export function RegisterPage() {
     role: 'Waiter' as 'Admin' | 'Waiter' | 'Cook',
   });
   const [error, setError] = useState('');
-  const [success, setSuccess] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
 
@@ -25,7 +24,6 @@ export function RegisterPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
-    setSuccess('');
 
     if (formData.password !== formData.confirmPassword) {
       setError('Passwords do not match');
@@ -35,19 +33,20 @@ export function RegisterPage() {
     setIsLoading(true);
 
     try {
-      await usersApi.create({
+      const response = await authApi.register({
         username: formData.username,
         password: formData.password,
         role: formData.role,
       });
-      setSuccess('Account created successfully! Please login.');
-      setTimeout(() => navigate('/login'), 2000);
+      // Автоматически входим после регистрации
+      localStorage.setItem('accessToken', response.token);
+      localStorage.setItem('user', JSON.stringify(response.user));
+      navigate('/');
     } catch (err: any) {
       const errorData = err.response?.data;
       if (typeof errorData === 'string') {
         setError(errorData);
       } else if (errorData?.errors) {
-        // Validation errors
         const messages = Object.values(errorData.errors).flat().join(', ');
         setError(messages);
       } else if (errorData?.title) {
@@ -70,11 +69,6 @@ export function RegisterPage() {
           {error && (
             <div className="bg-red-50 text-red-500 p-3 rounded-md text-sm">
               {error}
-            </div>
-          )}
-          {success && (
-            <div className="bg-green-50 text-green-500 p-3 rounded-md text-sm">
-              {success}
             </div>
           )}
           <Input

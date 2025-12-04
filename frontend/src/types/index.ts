@@ -16,6 +16,12 @@ export interface LoginCredentials {
     password: string;
 }
 
+export interface RegisterDto {
+    username: string;
+    password: string;
+    role: 'Admin' | 'Waiter' | 'Cook';
+}
+
 export interface CreateUserDto {
     username: string;
     password: string;

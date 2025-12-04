@@ -46,6 +46,37 @@ namespace Restoran.Controllers
             });
         }
 
+        [HttpPost("register")]
+        public async Task<ActionResult<AuthResponseDto>> Register(RegisterDto dto)
+        {
+            if (await _context.Users.AnyAsync(u => u.Username == dto.Username))
+                return BadRequest("Username already exists");
+
+            var user = new User
+            {
+                Username = dto.Username,
+                PasswordHash = BCrypt.Net.BCrypt.HashPassword(dto.Password),
+                Role = dto.Role
+            };
+
+            _context.Users.Add(user);
+            await _context.SaveChangesAsync();
+
+            var token = GenerateToken(user);
+
+            return Ok(new AuthResponseDto
+            {
+                Token = token,
+                User = new UserDto
+                {
+                    Id = user.Id,
+                    Username = user.Username,
+                    Role = user.Role,
+                    RestaurantId = user.RestaurantId
+                }
+            });
+        }
+
         private string GenerateToken(User user)
         {
             var claims = new[]

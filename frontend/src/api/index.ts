@@ -17,8 +17,18 @@ import type {
     ArchivedOrder,
     Statistics,
     User,
-    CreateUserDto
+    CreateUserDto,
+    AuthResponse,
+    RegisterDto
 } from '../types';
+
+// Auth API
+export const authApi = {
+    register: async (data: RegisterDto): Promise<AuthResponse> => {
+        const response = await client.post<AuthResponse>('/auth/register', data);
+        return response.data;
+    }
+};
 
 // Restaurants API
 export const restaurantsApi = {
