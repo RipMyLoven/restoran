@@ -36,4 +36,9 @@ namespace Restoran.DTOs
         public int MenuItemId { get; set; }
         public int Quantity { get; set; }
     }
+
+    public class UpdateOrderStatusDto
+    {
+        public OrderStatus Status { get; set; }
+    }
 }

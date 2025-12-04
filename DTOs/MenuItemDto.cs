@@ -16,5 +16,6 @@ namespace Restoran.DTOs
         public decimal Price { get; set; }
         public string Category { get; set; } = string.Empty;
         public bool IsAvailable { get; set; } = true;
+        public int RestaurantId { get; set; }
     }
 }

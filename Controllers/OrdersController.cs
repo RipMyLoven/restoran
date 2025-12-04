@@ -103,6 +103,16 @@ namespace Restoran.Controllers
         [ProducesResponseType(400)]
         public async Task<ActionResult<OrderDto>> CreateOrder(CreateOrderDto dto)
         {
+            // Валидация RestaurantId
+            var restaurant = await _context.Restaurants.FindAsync(dto.RestaurantId);
+            if (restaurant == null)
+                return BadRequest($"Restaurant with ID {dto.RestaurantId} not found. Please create a restaurant first.");
+
+            // Валидация TableId
+            var table = await _context.Tables.FindAsync(dto.TableId);
+            if (table == null)
+                return BadRequest($"Table with ID {dto.TableId} not found. Please create a table first.");
+
             var order = new Order
             {
                 TableId = dto.TableId,
@@ -156,17 +166,17 @@ namespace Restoran.Controllers
         [Authorize(Roles = "Admin,Cook,Waiter")]
         [ProducesResponseType(200)]
         [ProducesResponseType(404)]
-        public async Task<IActionResult> UpdateStatus(int id, [FromBody] OrderStatus status)
+        public async Task<IActionResult> UpdateStatus(int id, [FromBody] UpdateOrderStatusDto dto)
         {
             var order = await _context.Orders.FindAsync(id);
             if (order == null)
                 return NotFound();
 
             var oldStatus = order.Status;
-            order.Status = status;
+            order.Status = dto.Status;
 
             // Уведомление официантам когда заказ готов
-            if (status == OrderStatus.Ready && oldStatus != OrderStatus.Ready)
+            if (dto.Status == OrderStatus.Ready && oldStatus != OrderStatus.Ready)
             {
                 var waiters = await _context.Users
                     .Where(u => u.Role == UserRole.Waiter && u.RestaurantId == order.RestaurantId)

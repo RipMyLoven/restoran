@@ -55,12 +55,14 @@ export interface UpdateRestaurantDto {
 // Table types
 export interface Table {
     id: number;
-    tableNumber: number;
+    number: number;
+    seats: number;
     restaurantId: number;
 }
 
 export interface CreateTableDto {
-    tableNumber: number;
+    number: number;
+    seats: number;
     restaurantId: number;
 }
 
@@ -84,7 +86,7 @@ export interface UpdateMenuItemDto {
 }
 
 // Order types
-export type OrderStatus = 'Pending' | 'Preparing' | 'Ready' | 'Completed' | 'Cancelled';
+export type OrderStatus = 'New' | 'InProgress' | 'Ready' | 'Completed' | 'Cancelled';
 
 export interface OrderItem {
     id: number;
@@ -111,6 +113,7 @@ export interface CreateOrderItemDto {
 
 export interface CreateOrderDto {
     tableId: number;
+    restaurantId: number;
     notes?: string;
     orderItems: CreateOrderItemDto[];
 }

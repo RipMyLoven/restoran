@@ -60,15 +60,20 @@ namespace Restoran.Controllers
 
         [HttpPost]
         [Authorize(Roles = "Admin")]
-        public async Task<ActionResult<MenuItemDto>> CreateMenuItem(CreateMenuItemDto dto, [FromQuery] int restaurantId)
+        public async Task<ActionResult<MenuItemDto>> CreateMenuItem(CreateMenuItemDto dto)
         {
+            // Проверяем существование ресторана
+            var restaurantExists = await _context.Restaurants.AnyAsync(r => r.Id == dto.RestaurantId);
+            if (!restaurantExists)
+                return BadRequest($"Restaurant with ID {dto.RestaurantId} does not exist");
+
             var item = new MenuItem
             {
                 Name = dto.Name,
                 Price = dto.Price,
                 Category = dto.Category,
                 IsAvailable = dto.IsAvailable,
-                RestaurantId = restaurantId
+                RestaurantId = dto.RestaurantId
             };
 
             _context.MenuItems.Add(item);

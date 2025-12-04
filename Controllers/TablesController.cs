@@ -56,13 +56,18 @@ namespace Restoran.Controllers
 
         [HttpPost]
         [Authorize(Roles = "Admin")]
-        public async Task<ActionResult<TableDto>> CreateTable(CreateTableDto dto, [FromQuery] int restaurantId)
+        public async Task<ActionResult<TableDto>> CreateTable(CreateTableDto dto)
         {
+            // Валидация RestaurantId
+            var restaurant = await _context.Restaurants.FindAsync(dto.RestaurantId);
+            if (restaurant == null)
+                return BadRequest($"Restaurant with ID {dto.RestaurantId} not found. Please create a restaurant first.");
+
             var table = new Table
             {
                 Number = dto.Number,
                 Seats = dto.Seats,
-                RestaurantId = restaurantId
+                RestaurantId = dto.RestaurantId
             };
 
             _context.Tables.Add(table);

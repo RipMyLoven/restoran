@@ -11,8 +11,8 @@ import { useAuth } from '../context/AuthContext';
 import type { Order, CreateOrderDto, Table, MenuItem, Restaurant, OrderStatus } from '../types';
 
 const statusColors: Record<OrderStatus, 'default' | 'warning' | 'info' | 'success' | 'danger'> = {
-  Pending: 'warning',
-  Preparing: 'info',
+  New: 'warning',
+  InProgress: 'info',
   Ready: 'success',
   Completed: 'default',
   Cancelled: 'danger'
@@ -32,10 +32,11 @@ export function OrdersPage() {
   const [selectedTable, setSelectedTable] = useState<number | ''>('');
   const [formData, setFormData] = useState<CreateOrderDto>({
     tableId: 0,
+    restaurantId: 0,
     notes: '',
     orderItems: []
   });
-  const [newStatus, setNewStatus] = useState<OrderStatus>('Pending');
+  const [newStatus, setNewStatus] = useState<OrderStatus>('New');
 
   // Проверка прав
   const canCreateOrder = user?.role === 'Admin' || user?.role === 'Waiter';
@@ -50,10 +51,10 @@ export function OrdersPage() {
   }, [selectedTable]);
 
   useEffect(() => {
-    if (selectedRestaurant) {
+    if (formData.restaurantId > 0) {
       loadTablesAndMenu();
     }
-  }, [selectedRestaurant]);
+  }, [formData.restaurantId]);
 
   const loadData = async () => {
     try {
@@ -69,8 +70,8 @@ export function OrdersPage() {
   const loadTablesAndMenu = async () => {
     try {
       const [tablesData, menuData] = await Promise.all([
-        tablesApi.getAll(selectedRestaurant || undefined),
-        menuItemsApi.getAll(selectedRestaurant || undefined)
+        tablesApi.getAll(formData.restaurantId || undefined),
+        menuItemsApi.getAll(formData.restaurantId || undefined)
       ]);
       setTables(tablesData);
       setMenuItems(menuData);
@@ -97,7 +98,7 @@ export function OrdersPage() {
     try {
       await ordersApi.create(formData);
       setIsModalOpen(false);
-      setFormData({ tableId: 0, notes: '', orderItems: [] });
+      setFormData({ tableId: 0, restaurantId: 0, notes: '', orderItems: [] });
       loadOrders();
     } catch (error: any) {
       const errorData = error.response?.data;
@@ -235,7 +236,7 @@ export function OrdersPage() {
             onChange={(e) => setSelectedTable(e.target.value ? parseInt(e.target.value) : '')}
             options={[
               { value: '', label: 'All Tables' },
-              ...tables.map(t => ({ value: t.id, label: `Table ${t.tableNumber}` }))
+              ...tables.map(t => ({ value: t.id, label: `Table ${t.number}` }))
             ]}
           />
         )}
@@ -252,22 +253,26 @@ export function OrdersPage() {
         isOpen={isModalOpen}
         onClose={() => {
           setIsModalOpen(false);
-          setFormData({ tableId: 0, notes: '', orderItems: [] });
+          setFormData({ tableId: 0, restaurantId: 0, notes: '', orderItems: [] });
         }}
         title="New Order"
       >
         <form onSubmit={handleSubmit} className="space-y-4">
           <Select
             label="Restaurant"
-            value={selectedRestaurant}
-            onChange={(e) => setSelectedRestaurant(parseInt(e.target.value) || '')}
+            value={formData.restaurantId}
+            onChange={(e) => {
+              const restId = parseInt(e.target.value) || 0;
+              setSelectedRestaurant(restId || '');
+              setFormData({ ...formData, restaurantId: restId, tableId: 0 });
+            }}
             options={[
-              { value: '', label: 'Select Restaurant' },
+              { value: 0, label: 'Select Restaurant' },
               ...restaurants.map(r => ({ value: r.id, label: r.name }))
             ]}
             required
           />
-          {selectedRestaurant && (
+          {formData.restaurantId > 0 && (
             <>
               <Select
                 label="Table"
@@ -275,7 +280,7 @@ export function OrdersPage() {
                 onChange={(e) => setFormData({ ...formData, tableId: parseInt(e.target.value) })}
                 options={[
                   { value: 0, label: 'Select Table' },
-                  ...tables.map(t => ({ value: t.id, label: `Table ${t.tableNumber}` }))
+                  ...tables.map(t => ({ value: t.id, label: `Table ${t.number}` }))
                 ]}
                 required
               />
@@ -349,8 +354,8 @@ export function OrdersPage() {
             value={newStatus}
             onChange={(e) => setNewStatus(e.target.value as OrderStatus)}
             options={[
-              { value: 'Pending', label: 'Pending' },
-              { value: 'Preparing', label: 'Preparing' },
+              { value: 'New', label: 'New' },
+              { value: 'InProgress', label: 'In Progress' },
               { value: 'Ready', label: 'Ready' },
               { value: 'Completed', label: 'Completed' },
               { value: 'Cancelled', label: 'Cancelled' }

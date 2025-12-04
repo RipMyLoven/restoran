@@ -15,7 +15,8 @@ export function TablesPage() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedRestaurant, setSelectedRestaurant] = useState<number | ''>('');
   const [formData, setFormData] = useState<CreateTableDto>({
-    tableNumber: 1,
+    number: 1,
+    seats: 4,
     restaurantId: 0
   });
 
@@ -52,7 +53,7 @@ export function TablesPage() {
     try {
       await tablesApi.create(formData);
       setIsModalOpen(false);
-      setFormData({ tableNumber: 1, restaurantId: 0 });
+      setFormData({ number: 1, seats: 4, restaurantId: 0 });
       loadTables();
     } catch (error) {
       console.error('Failed to create table:', error);
@@ -76,7 +77,8 @@ export function TablesPage() {
 
   const columns = [
     { key: 'id' as const, header: 'ID' },
-    { key: 'tableNumber' as const, header: 'Table Number' },
+    { key: 'number' as const, header: 'Table Number' },
+    { key: 'seats' as const, header: 'Seats' },
     {
       key: 'restaurantId' as const,
       header: 'Restaurant',
@@ -124,7 +126,7 @@ export function TablesPage() {
         isOpen={isModalOpen}
         onClose={() => {
           setIsModalOpen(false);
-          setFormData({ tableNumber: 1, restaurantId: 0 });
+          setFormData({ number: 1, seats: 4, restaurantId: 0 });
         }}
         title="Add Table"
       >
@@ -142,8 +144,15 @@ export function TablesPage() {
           <Input
             label="Table Number"
             type="number"
-            value={formData.tableNumber}
-            onChange={(e) => setFormData({ ...formData, tableNumber: parseInt(e.target.value) || 1 })}
+            value={formData.number}
+            onChange={(e) => setFormData({ ...formData, number: parseInt(e.target.value) || 1 })}
+            required
+          />
+          <Input
+            label="Seats"
+            type="number"
+            value={formData.seats}
+            onChange={(e) => setFormData({ ...formData, seats: parseInt(e.target.value) || 1 })}
             required
           />
           <div className="flex justify-end gap-2">

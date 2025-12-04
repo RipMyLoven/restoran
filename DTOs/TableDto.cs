@@ -12,5 +12,6 @@ namespace Restoran.DTOs
     {
         public int Number { get; set; }
         public int Seats { get; set; }
+        public int RestaurantId { get; set; }
     }
 }
