@@ -9,6 +9,7 @@ import type { Bill, Order } from '../types';
 
 export function BillsPage() {
   const [bills, setBills] = useState<Bill[]>([]);
+  const [allBills, setAllBills] = useState<Bill[]>([]); // Все счета для проверки
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedOrder, setSelectedOrder] = useState<number | ''>('');
@@ -23,7 +24,11 @@ export function BillsPage() {
         billsApi.getAll(),
         ordersApi.getAll()
       ]);
-      setBills(billsData);
+      // Сохраняем все счета для проверки
+      setAllBills(billsData);
+      // Показываем только неоплаченные счета
+      const unpaidBills = billsData.filter(bill => !bill.isPaid);
+      setBills(unpaidBills);
       setOrders(ordersData);
     } catch (error) {
       console.error('Failed to load data:', error);
@@ -54,7 +59,7 @@ export function BillsPage() {
 
   // Filter orders that don't have bills yet
   const ordersWithoutBills = orders.filter(
-    order => !bills.some(bill => bill.orderId === order.id) && 
+    order => !allBills.some(bill => bill.orderId === order.id) && 
              (order.status === 'Ready' || order.status === 'Completed')
   );
 

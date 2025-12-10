@@ -10,7 +10,7 @@ namespace Restoran.DTOs
         public OrderStatus Status { get; set; }
         public string Notes { get; set; } = string.Empty;
         public DateTime CreatedAt { get; set; }
-        public List<OrderItemDto> Items { get; set; } = new();
+        public List<OrderItemDto> OrderItems { get; set; } = new();
         public decimal Total { get; set; }
     }
 
@@ -19,7 +19,7 @@ namespace Restoran.DTOs
         public int TableId { get; set; }
         public int RestaurantId { get; set; }
         public string Notes { get; set; } = string.Empty;
-        public List<CreateOrderItemDto> Items { get; set; } = new();
+        public List<CreateOrderItemDto> OrderItems { get; set; } = new();
     }
 
     public class OrderItemDto

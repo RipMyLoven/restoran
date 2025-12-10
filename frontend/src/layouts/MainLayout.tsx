@@ -14,16 +14,15 @@ export function MainLayout() {
 
   const isActive = (path: string) => location.pathname === path;
 
-  // Определяем доступные ссылки для каждой роли
   const getNavLinks = () => {
     const links = [
       { to: '/', label: 'Dashboard', roles: ['Admin', 'Waiter', 'Cook'] },
       { to: '/restaurants', label: 'Restaurants', roles: ['Admin'] },
-      { to: '/tables', label: 'Tables', roles: ['Admin'] },
-      { to: '/menu', label: 'Menu', roles: ['Admin', 'Waiter', 'Cook'] },
+      { to: '/tables', label: 'Tables', roles: ['Admin', 'Waiter'] },
+      { to: '/menu', label: 'Menu', roles: ['Admin', 'Cook'] },
       { to: '/orders', label: 'Orders', roles: ['Admin', 'Waiter', 'Cook'] },
       { to: '/bills', label: 'Bills', roles: ['Admin', 'Waiter'] },
-      { to: '/notifications', label: 'Notifications', roles: ['Admin', 'Waiter', 'Cook'] },
+      //{ to: '/notifications', label: 'Notifications', roles: ['Admin', 'Waiter', 'Cook'] },
       { to: '/archive', label: 'Archive', roles: ['Admin'] },
       { to: '/users', label: 'Users', roles: ['Admin'] },
     ];

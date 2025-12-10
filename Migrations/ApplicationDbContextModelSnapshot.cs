@@ -56,7 +56,7 @@ namespace Restoran.Migrations
 
                     b.HasIndex("RestaurantId");
 
-                    b.ToTable("ArchivedOrders", (string)null);
+                    b.ToTable("ArchivedOrders");
                 });
 
             modelBuilder.Entity("Restoran.Models.Bill", b =>
@@ -87,7 +87,7 @@ namespace Restoran.Migrations
                     b.HasIndex("OrderId")
                         .IsUnique();
 
-                    b.ToTable("Bills", (string)null);
+                    b.ToTable("Bills");
                 });
 
             modelBuilder.Entity("Restoran.Models.MenuItem", b =>
@@ -120,7 +120,7 @@ namespace Restoran.Migrations
 
                     b.HasIndex("RestaurantId");
 
-                    b.ToTable("MenuItems", (string)null);
+                    b.ToTable("MenuItems");
                 });
 
             modelBuilder.Entity("Restoran.Models.Notification", b =>
@@ -157,7 +157,7 @@ namespace Restoran.Migrations
 
                     b.HasIndex("UserId");
 
-                    b.ToTable("Notifications", (string)null);
+                    b.ToTable("Notifications");
                 });
 
             modelBuilder.Entity("Restoran.Models.Order", b =>
@@ -190,7 +190,7 @@ namespace Restoran.Migrations
 
                     b.HasIndex("TableId");
 
-                    b.ToTable("Orders", (string)null);
+                    b.ToTable("Orders");
                 });
 
             modelBuilder.Entity("Restoran.Models.OrderItem", b =>
@@ -219,7 +219,7 @@ namespace Restoran.Migrations
 
                     b.HasIndex("OrderId");
 
-                    b.ToTable("OrderItems", (string)null);
+                    b.ToTable("OrderItems");
                 });
 
             modelBuilder.Entity("Restoran.Models.Restaurant", b =>
@@ -250,7 +250,7 @@ namespace Restoran.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("Restaurants", (string)null);
+                    b.ToTable("Restaurants");
                 });
 
             modelBuilder.Entity("Restoran.Models.Table", b =>
@@ -274,7 +274,7 @@ namespace Restoran.Migrations
 
                     b.HasIndex("RestaurantId");
 
-                    b.ToTable("Tables", (string)null);
+                    b.ToTable("Tables");
                 });
 
             modelBuilder.Entity("Restoran.Models.User", b =>
@@ -307,7 +307,7 @@ namespace Restoran.Migrations
                     b.HasIndex("Username")
                         .IsUnique();
 
-                    b.ToTable("Users", (string)null);
+                    b.ToTable("Users");
                 });
 
             modelBuilder.Entity("Restoran.Models.ArchivedOrder", b =>

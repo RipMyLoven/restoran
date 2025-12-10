@@ -54,7 +54,10 @@ export function App() {
             <Route path="/menu" element={<MenuPage />} />
             <Route path="/orders" element={<OrdersPage />} />
             <Route path="/bills" element={<BillsPage />} />
+            { /*
             <Route path="/notifications" element={<NotificationsPage />} />
+            */}
+              
             <Route path="/archive" element={<ArchivePage />} />
             <Route path="/users" element={<UsersPage />} />
           </Route>

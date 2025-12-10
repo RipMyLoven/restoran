@@ -12,6 +12,8 @@ import type { MenuItem, CreateMenuItemDto, Restaurant } from '../types';
 export function MenuPage() {
   const { user } = useAuth();
   const isAdmin = user?.role === 'Admin';
+  const isCook = user?.role === 'Cook';
+  const canManageMenu = isAdmin || isCook;
   const [menuItems, setMenuItems] = useState<MenuItem[]>([]);
   const [restaurants, setRestaurants] = useState<Restaurant[]>([]);
   const [loading, setLoading] = useState(true);
@@ -109,7 +111,7 @@ export function MenuPage() {
       header: 'Restaurant',
       render: (item: MenuItem) => getRestaurantName(item.restaurantId)
     },
-    ...(isAdmin ? [{
+    ...(canManageMenu ? [{
       key: 'actions',
       header: 'Actions',
       render: (item: MenuItem) => (
@@ -131,7 +133,7 @@ export function MenuPage() {
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <h1 className="text-3xl font-bold text-gray-900">Menu Items</h1>
-        {isAdmin && (
+        {canManageMenu && (
           <Button onClick={() => setIsModalOpen(true)}>Add Menu Item</Button>
         )}
       </div>

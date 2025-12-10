@@ -43,7 +43,7 @@ namespace Restoran.Controllers
                 Status = o.Status,
                 Notes = o.Notes,
                 CreatedAt = o.CreatedAt,
-                Items = o.OrderItems.Select(oi => new OrderItemDto
+                OrderItems = o.OrderItems.Select(oi => new OrderItemDto
                 {
                     Id = oi.Id,
                     MenuItemId = oi.MenuItemId,
@@ -77,7 +77,7 @@ namespace Restoran.Controllers
                     Status = o.Status,
                     Notes = o.Notes,
                     CreatedAt = o.CreatedAt,
-                    Items = o.OrderItems.Select(oi => new OrderItemDto
+                    OrderItems = o.OrderItems.Select(oi => new OrderItemDto
                     {
                         Id = oi.Id,
                         MenuItemId = oi.MenuItemId,
@@ -124,7 +124,7 @@ namespace Restoran.Controllers
             _context.Orders.Add(order);
             await _context.SaveChangesAsync();
 
-            foreach (var item in dto.Items)
+            foreach (var item in dto.OrderItems)
             {
                 var menuItem = await _context.MenuItems.FindAsync(item.MenuItemId);
                 if (menuItem == null)

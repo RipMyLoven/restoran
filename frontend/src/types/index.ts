@@ -157,7 +157,7 @@ export interface ArchivedOrder {
     tableNumber: number;
     orderItemsJson: string;
     total: number;
-    createdAt: string;
+    orderCreatedAt: string;
     archivedAt: string;
 }
 
@@ -165,4 +165,6 @@ export interface Statistics {
     totalOrders: number;
     totalRevenue: number;
     averageOrderValue: number;
+    ordersToday: number;
+    revenueToday: number;
 }

@@ -68,9 +68,9 @@ export function ArchivePage() {
       render: (order: ArchivedOrder) => `€${order.total.toFixed(2)}`
     },
     {
-      key: 'createdAt' as const,
+      key: 'orderCreatedAt' as const,
       header: 'Order Date',
-      render: (order: ArchivedOrder) => new Date(order.createdAt).toLocaleString()
+      render: (order: ArchivedOrder) => new Date(order.orderCreatedAt).toLocaleString()
     },
     {
       key: 'archivedAt' as const,

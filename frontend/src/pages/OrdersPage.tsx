@@ -83,7 +83,16 @@ export function OrdersPage() {
   const loadOrders = async () => {
     try {
       const data = await ordersApi.getAll(selectedTable || undefined);
-      setOrders(data);
+      // Фильтрация заказов в зависимости от роли
+      let filteredOrders = data;
+      if (user?.role === 'Cook') {
+        // Cook видит только New и InProgress заказы
+        filteredOrders = data.filter(o => o.status === 'New' || o.status === 'InProgress');
+      } else if (user?.role === 'Waiter') {
+        // Waiter видит только New, InProgress и Ready (не видит Completed и Cancelled)
+        filteredOrders = data.filter(o => o.status === 'New' || o.status === 'InProgress' || o.status === 'Ready');
+      }
+      setOrders(filteredOrders);
     } catch (error) {
       console.error('Failed to load orders:', error);
     }

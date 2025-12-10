@@ -9,7 +9,7 @@ namespace Restoran.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
-    [Authorize] // Требуется авторизация
+    [Authorize]
     public class MenuItemsController : ControllerBase
     {
         private readonly ApplicationDbContext _context;
@@ -59,7 +59,7 @@ namespace Restoran.Controllers
         }
 
         [HttpPost]
-        [Authorize(Roles = "Admin")]
+        [Authorize(Roles = "Admin,Cook")]
         public async Task<ActionResult<MenuItemDto>> CreateMenuItem(CreateMenuItemDto dto)
         {
             // Проверяем существование ресторана
@@ -91,7 +91,7 @@ namespace Restoran.Controllers
         }
 
         [HttpPut("{id}")]
-        [Authorize(Roles = "Admin")]
+        [Authorize(Roles = "Admin,Cook")]
         public async Task<IActionResult> UpdateMenuItem(int id, CreateMenuItemDto dto)
         {
             var item = await _context.MenuItems.FindAsync(id);
@@ -108,7 +108,7 @@ namespace Restoran.Controllers
         }
 
         [HttpDelete("{id}")]
-        [Authorize(Roles = "Admin")]
+        [Authorize(Roles = "Admin,Cook")]
         public async Task<IActionResult> DeleteMenuItem(int id)
         {
             var item = await _context.MenuItems.FindAsync(id);
