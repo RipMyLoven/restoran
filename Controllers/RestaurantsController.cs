@@ -82,7 +82,6 @@ namespace Restoran.Controllers
             _context.Restaurants.Add(restaurant);
             await _context.SaveChangesAsync();
 
-            // Автоматически создаём столы
             for (int i = 1; i <= dto.TableCount; i++)
             {
                 _context.Tables.Add(new Table

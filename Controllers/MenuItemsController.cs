@@ -62,7 +62,6 @@ namespace Restoran.Controllers
         [Authorize(Roles = "Admin,Cook")]
         public async Task<ActionResult<MenuItemDto>> CreateMenuItem(CreateMenuItemDto dto)
         {
-            // Проверяем существование ресторана
             var restaurantExists = await _context.Restaurants.AnyAsync(r => r.Id == dto.RestaurantId);
             if (!restaurantExists)
                 return BadRequest($"Restaurant with ID {dto.RestaurantId} does not exist");

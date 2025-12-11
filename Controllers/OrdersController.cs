@@ -103,12 +103,10 @@ namespace Restoran.Controllers
         [ProducesResponseType(400)]
         public async Task<ActionResult<OrderDto>> CreateOrder(CreateOrderDto dto)
         {
-            // Валидация RestaurantId
             var restaurant = await _context.Restaurants.FindAsync(dto.RestaurantId);
             if (restaurant == null)
                 return BadRequest($"Restaurant with ID {dto.RestaurantId} not found. Please create a restaurant first.");
 
-            // Валидация TableId
             var table = await _context.Tables.FindAsync(dto.TableId);
             if (table == null)
                 return BadRequest($"Table with ID {dto.TableId} not found. Please create a table first.");
@@ -139,7 +137,6 @@ namespace Restoran.Controllers
                 });
             }
 
-            // Уведомление поварам о новом заказе
             var cooks = await _context.Users
                 .Where(u => u.Role == UserRole.Cook && u.RestaurantId == dto.RestaurantId)
                 .ToListAsync();
@@ -175,7 +172,6 @@ namespace Restoran.Controllers
             var oldStatus = order.Status;
             order.Status = dto.Status;
 
-            // Уведомление официантам когда заказ готов
             if (dto.Status == OrderStatus.Ready && oldStatus != OrderStatus.Ready)
             {
                 var waiters = await _context.Users

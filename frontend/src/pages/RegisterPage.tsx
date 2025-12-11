@@ -78,17 +78,6 @@ export function RegisterPage() {
             onChange={handleChange}
             required
           />
-          <Select
-            label="Role"
-            name="role"
-            value={formData.role}
-            onChange={handleChange}
-            options={[
-              { value: 'Waiter', label: 'Waiter' },
-              { value: 'Cook', label: 'Cook' },
-              { value: 'Admin', label: 'Admin' },
-            ]}
-          />
           <Input
             label="Password"
             type="password"
